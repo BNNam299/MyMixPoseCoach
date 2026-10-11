@@ -6,9 +6,12 @@ APP_DIR="$ROOT_DIR/myposecoach1"
 WORKSPACE="$APP_DIR/myposecoach1.xcworkspace"
 COCOAPODS_VERSION="1.16.2"
 LOCAL_GEM_BIN="$ROOT_DIR/.build/ruby-bin"
+LOCAL_GEM_HOME="$ROOT_DIR/.build/ruby-gems"
 POD_COMMAND=""
 
-if [[ -d "$LOCAL_GEM_BIN" ]]; then
+if [[ -x "$LOCAL_GEM_BIN/pod" ]]; then
+  export GEM_HOME="$LOCAL_GEM_HOME"
+  export GEM_PATH="$LOCAL_GEM_HOME"
   export PATH="$LOCAL_GEM_BIN:$PATH"
 fi
 
@@ -48,12 +51,16 @@ if [[ "$current_pod_version" != "$COCOAPODS_VERSION" ]]; then
     exit 2
   fi
 
-  echo "Đang cài CocoaPods $COCOAPODS_VERSION cho user hiện tại..."
-  mkdir -p "$LOCAL_GEM_BIN"
-  gem install --user-install cocoapods \
+  echo "Đang cài CocoaPods $COCOAPODS_VERSION vào .build..."
+  mkdir -p "$LOCAL_GEM_BIN" "$LOCAL_GEM_HOME"
+  export GEM_HOME="$LOCAL_GEM_HOME"
+  export GEM_PATH="$LOCAL_GEM_HOME"
+  gem install cocoapods \
     --version "$COCOAPODS_VERSION" \
+    --install-dir "$LOCAL_GEM_HOME" \
     --bindir "$LOCAL_GEM_BIN" \
     --no-document
+  export PATH="$LOCAL_GEM_BIN:$PATH"
   POD_COMMAND="$LOCAL_GEM_BIN/pod"
 fi
 
