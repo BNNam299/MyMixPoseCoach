@@ -6,6 +6,7 @@ APP_DIR="$ROOT_DIR/myposecoach1"
 WORKSPACE="$APP_DIR/myposecoach1.xcworkspace"
 COCOAPODS_VERSION="1.16.2"
 LOCAL_GEM_BIN="$ROOT_DIR/.build/ruby-bin"
+POD_COMMAND=""
 
 if [[ -d "$LOCAL_GEM_BIN" ]]; then
   export PATH="$LOCAL_GEM_BIN:$PATH"
@@ -30,9 +31,15 @@ fi
 
 "$ROOT_DIR/tools/verify_ios_assets.sh"
 
+if [[ -x "$LOCAL_GEM_BIN/pod" ]]; then
+  POD_COMMAND="$LOCAL_GEM_BIN/pod"
+elif command -v pod >/dev/null 2>&1; then
+  POD_COMMAND="$(command -v pod)"
+fi
+
 current_pod_version=""
-if command -v pod >/dev/null 2>&1; then
-  current_pod_version="$(pod --version 2>/dev/null || true)"
+if [[ -n "$POD_COMMAND" ]]; then
+  current_pod_version="$("$POD_COMMAND" --version 2>/dev/null || true)"
 fi
 
 if [[ "$current_pod_version" != "$COCOAPODS_VERSION" ]]; then
@@ -47,11 +54,10 @@ if [[ "$current_pod_version" != "$COCOAPODS_VERSION" ]]; then
     --version "$COCOAPODS_VERSION" \
     --bindir "$LOCAL_GEM_BIN" \
     --no-document
-  export PATH="$LOCAL_GEM_BIN:$PATH"
-  rehash
+  POD_COMMAND="$LOCAL_GEM_BIN/pod"
 fi
 
-if ! command -v pod >/dev/null 2>&1 || [[ "$(pod --version)" != "$COCOAPODS_VERSION" ]]; then
+if [[ ! -x "$POD_COMMAND" ]] || [[ "$("$POD_COMMAND" --version)" != "$COCOAPODS_VERSION" ]]; then
   echo "Lỗi: không gọi được CocoaPods $COCOAPODS_VERSION sau khi cài." >&2
   exit 2
 fi
@@ -59,7 +65,7 @@ fi
 echo "Đang khôi phục CocoaPods từ Podfile.lock..."
 (
   cd "$APP_DIR"
-  pod _${COCOAPODS_VERSION}_ install --deployment
+  "$POD_COMMAND" _${COCOAPODS_VERSION}_ install --deployment
 )
 
 echo "Đang khôi phục Swift Package từ Package.resolved..."
