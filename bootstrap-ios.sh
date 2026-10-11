@@ -16,6 +16,13 @@ if ! command -v xcodebuild >/dev/null 2>&1; then
   exit 2
 fi
 
+if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+  && [[ -f "$ROOT_DIR/.gitmodules" ]]; then
+  echo "Đang khôi phục source Android tham chiếu ở submodule posecoach..."
+  git -C "$ROOT_DIR" submodule sync --recursive
+  git -C "$ROOT_DIR" submodule update --init --recursive
+fi
+
 "$ROOT_DIR/tools/verify_ios_assets.sh"
 
 current_pod_version=""
@@ -43,13 +50,14 @@ fi
 echo "Đang khôi phục CocoaPods từ Podfile.lock..."
 (
   cd "$APP_DIR"
-  pod install
+  pod _${COCOAPODS_VERSION}_ install --deployment
 )
 
 echo "Đang khôi phục Swift Package từ Package.resolved..."
 xcodebuild -resolvePackageDependencies \
   -workspace "$WORKSPACE" \
-  -scheme myposecoach1
+  -scheme myposecoach1 \
+  -disableAutomaticPackageResolution
 
 echo "Bootstrap hoàn tất: $WORKSPACE"
 

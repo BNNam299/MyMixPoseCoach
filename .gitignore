@@ -3,3 +3,6 @@
 /spikes/**/DerivedData/
 /testdata/pinterest-posecoach/
 __pycache__/
+.DS_Store
+**/xcuserdata/
+/.build/

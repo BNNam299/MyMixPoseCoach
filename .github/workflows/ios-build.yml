@@ -17,43 +17,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Verify bundled models
-        run: ./tools/verify_ios_assets.sh
+        with:
+          submodules: recursive
 
       - name: Install locked CocoaPods
         run: sudo gem install cocoapods --version 1.16.2 --no-document
 
-      - name: Restore CocoaPods
-        working-directory: myposecoach1
-        run: pod _1.16.2_ install
+      - name: Run the same clean build command as a new clone
+        env:
+          DERIVED_DATA_PATH: ${{ runner.temp }}/DerivedData
+        run: ./build-ios.sh
 
-      - name: Verify CocoaPods lockfile
-        run: git diff --exit-code -- myposecoach1/Podfile.lock
-
-      - name: Resolve Swift packages
-        run: >-
-          xcodebuild -resolvePackageDependencies
-          -workspace myposecoach1/myposecoach1.xcworkspace
-          -scheme myposecoach1
-
-      - name: Verify Swift Package lockfiles
-        run: >-
-          git diff --exit-code --
-          myposecoach1/myposecoach1.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          myposecoach1/myposecoach1.xcworkspace/xcshareddata/swiftpm/Package.resolved
-
-      - name: Build
-        run: >-
-          xcodebuild build
-          -workspace myposecoach1/myposecoach1.xcworkspace
-          -scheme myposecoach1
-          -destination 'generic/platform=iOS'
-          -derivedDataPath "$RUNNER_TEMP/DerivedData"
-          CODE_SIGNING_ALLOWED=NO
-
-      - name: Verify models in app bundle
-        run: |
-          app="$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphoneos/myposecoach1.app"
-          test -f "$app/pose_landmarker_full.task"
-          test -f "$app/geocalib/geocalib-mang-int8.onnx" || test -f "$app/geocalib-mang-int8.onnx"
+      - name: Verify lockfiles stay unchanged
+        run: git diff --exit-code -- myposecoach1/Podfile.lock myposecoach1/myposecoach1.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved myposecoach1/myposecoach1.xcworkspace/xcshareddata/swiftpm/Package.resolved
