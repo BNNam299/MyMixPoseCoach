@@ -20,9 +20,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install locked CocoaPods
-        run: sudo gem install cocoapods --version 1.16.2 --no-document
-
       - name: Run the same clean build command as a new clone
         env:
           DERIVED_DATA_PATH: ${{ runner.temp }}/DerivedData

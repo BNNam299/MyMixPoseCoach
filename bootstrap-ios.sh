@@ -5,6 +5,11 @@ ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$ROOT_DIR/myposecoach1"
 WORKSPACE="$APP_DIR/myposecoach1.xcworkspace"
 COCOAPODS_VERSION="1.16.2"
+LOCAL_GEM_BIN="$ROOT_DIR/.build/ruby-bin"
+
+if [[ -d "$LOCAL_GEM_BIN" ]]; then
+  export PATH="$LOCAL_GEM_BIN:$PATH"
+fi
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "Lỗi: iOS chỉ có thể bootstrap/build trên macOS." >&2
@@ -37,9 +42,13 @@ if [[ "$current_pod_version" != "$COCOAPODS_VERSION" ]]; then
   fi
 
   echo "Đang cài CocoaPods $COCOAPODS_VERSION cho user hiện tại..."
-  gem install --user-install cocoapods --version "$COCOAPODS_VERSION" --no-document
-  user_gem_bin="$(ruby -r rubygems -e 'print Gem.user_dir')/bin"
-  export PATH="$user_gem_bin:$PATH"
+  mkdir -p "$LOCAL_GEM_BIN"
+  gem install --user-install cocoapods \
+    --version "$COCOAPODS_VERSION" \
+    --bindir "$LOCAL_GEM_BIN" \
+    --no-document
+  export PATH="$LOCAL_GEM_BIN:$PATH"
+  rehash
 fi
 
 if ! command -v pod >/dev/null 2>&1 || [[ "$(pod --version)" != "$COCOAPODS_VERSION" ]]; then
